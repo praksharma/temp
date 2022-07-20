@@ -1,0 +1,36 @@
+I have a multitask loss. The first loss term contains a standard MSE of ground truth and predicted output. The second loss term contains a standard MSE of the "second derivative of the output wrt to network inputs" and separate ground truth.
+
+* The first loss term
+
+```python
+def loss_data(self,x,y):
+        loss_u = self.loss_function(self.forward(x), y)       
+        return loss_u
+```
+* The second loss term
+
+```python
+def loss_PDE(self, x_to_train_f, k):           
+        g = x_to_train_f.clone() # a part of network inputs
+        g.requires_grad = True
+        u = self.forward(g) # network output
+        
+        ### first derivative of output wrt inputs 
+
+        u_x = autograd.grad(u,g, torch.ones([x_to_train_f.shape[0], 1]).to(device), retain_graph=True, create_graph=True)[0] 
+        
+        ### second derivative of output wrt inputs
+        u_xx = autograd.grad(u_x, g,torch.ones(x_to_train_f.shape).to(device), create_graph=True)[0]
+        f = k * u_xx # a resulting partial differential equation
+        loss_f = self.loss_function(f,f_hat) # f_hat is ground truth (global variable)     
+        return loss_f
+```
+In my case $k$ (conductivity) which is the coefficient of $u_{xx}$ in `loss_PDE` is to be regressed using the neural network. I created a tensor as follows,
+
+```python
+conductivity =  torch.tensor(5.0, dtype=None, requires_grad=True) # initialise parameters with random value
+```
+I initialized the Adam optimizer, the parameters list as follows:
+```python
+params = list(PINN.parameters()) + [conductivity]
+``` 
