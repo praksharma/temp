@@ -2,6 +2,5 @@
 
 This repo stores garbage.
 
-https://free3d.com/
 
-[new tab](chrome://newtab)
+Windows 7 loader password: windows
